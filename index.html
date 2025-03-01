@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ứng Dụng Chụp Ảnh</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Chụp Photo Booth</h1>
+      <!-- Phần video -->
+      <video id="video" autoplay></video>
+
+      <!-- Nút chụp ảnh -->
+      <button id="captureButton">Chụp Ảnh</button>
+
+      <!-- Hiển thị ảnh đã chụp -->
+      <div id="imageContainer"></div>
+
+      <!-- Các nút tải và xoá ảnh -->
+      <div class="bulk-actions">
+        <button id="downloadSelected">Tải Ảnh Đã Chọn</button>
+        <button id="deleteSelected">Xoá Ảnh Đã Chọn</button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

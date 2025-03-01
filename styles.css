@@ -1,0 +1,110 @@
+body {
+  font-family: "Arial", sans-serif;
+  background-color: white; /* Màu vàng sáng */
+  color: #333;
+  text-align: center;
+  padding: 20px;
+  margin: 0;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff9c4;
+  border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  font-size: 2.5em;
+  color: #4caf50;
+  margin-bottom: 20px;
+}
+
+#video {
+  border: 5px solid #ff5722; /* Màu cam đậm */
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+#captureButton {
+  padding: 15px 30px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 15px 0;
+  font-size: 2≥÷em;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+#captureButton:hover {
+  background-color: #1976d2;
+  transform: scale(1.1);
+}
+
+#imageContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+.imageWrapper {
+  text-align: center;
+  position: relative;
+}
+
+.capturedImage {
+  max-width: 320px;
+  border-radius: 10px;
+  border: 3px solid #fff;
+  box-shadow: 0 6px 15px white;
+  transition: transform 0.3s ease-in-out;
+}
+
+.capturedImage:hover {
+  transform: scale(1.05);
+}
+
+.capturedImage.selected {
+  border: 5px solid white; /* Viền cam sáng */
+  transform: scale(1.1);
+  box-shadow: 0 10px 20px white;
+}
+
+.bulk-actions {
+  margin: 20px 0;
+}
+
+button#downloadSelected,
+button#deleteSelected {
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 16px;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+button#downloadSelected {
+  background-color: #4caf50;
+  color: white;
+}
+
+button#downloadSelected:hover {
+  background-color: #388e3c;
+}
+
+button#deleteSelected {
+  background-color: #f44336;
+  color: white;
+}
+
+button#deleteSelected:hover {
+  background-color: #d32f2f;
+}
