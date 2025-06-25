@@ -1,30 +1,42 @@
 <!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ứng Dụng Chụp Ảnh</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="container">
-      <div id="countdownDisplay" style="display: none; font-size: 24px; font-weight: bold; color: red;"></div>
-      <h1>Chụp Photo Booth</h1>
-      <!-- Phần video -->
-      <video id="video" autoplay></video>
+<head>
+  <meta charset="UTF-8" />
+  <title>Trắc nghiệm nâng cao</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🧠 Trắc nghiệm nâng cao</h1>
 
-      <!-- Nút chụp ảnh -->
-      <button id="captureButton">Chụp Ảnh</button>
+    <textarea
+      id="inputArea"
+      placeholder="Nhập câu hỏi dạng:
+33/ TA có F={A ->BC, C-> X, B-> Z, A-> D }, Tính [A]+ =
+* ABCDXZ
+• ABCDX
+34/ ..."
+      rows="10"
+    ></textarea>
 
-      <!-- Hiển thị ảnh đã chụp -->
-      <div id="imageContainer"></div>
-
-      <!-- Các nút tải và xoá ảnh -->
-      <div class="bulk-actions">
-        <button id="downloadSelected">Tải Ảnh Đã Chọn</button>
-        <button id="deleteSelected">Xoá Ảnh Đã Chọn</button>
-      </div>
+    <div class="button-row">
+      <button onclick="generateQuiz()">Tạo câu hỏi</button>
+      <button onclick="shuffleAnswers()">Đảo đáp án</button>
+      <button onclick="restartQuiz()">Làm lại</button>
     </div>
-    <script src="script.js"></script>
-  </body>
+
+    <div id="mainQuizArea" style="display:none" class="main-quiz-area">
+      <div id="quizArea">
+        <div id="questionContainer"></div>
+        <div class="nav-buttons">
+          <button onclick="prevQuestion()">◀ Câu trước</button>
+          <button onclick="nextQuestion()">Câu tiếp ▶</button>
+        </div>
+      </div>
+      <div id="listContainer" class="question-list"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
 </html>
