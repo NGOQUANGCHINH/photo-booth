@@ -15,24 +15,29 @@ function generateQuiz() {
     let options = [];
     let foundOption = false;
     let currentOption = null;
-    let optionCount = 0;
+
+    // Regex nhận dạng đáp án bắt đầu bằng:
+    // (tùy chọn) dấu * hoặc •, tiếp theo là a-d/A-D rồi dấu chấm
+    const optionRegex = /^([\*\•])?\s*([a-dA-D])\.\s*(.*)$/;
 
     for (let line of lines) {
-      if (/^[\*•]\s*/.test(line.trim())) {
+      const trimLine = line.trim();
+
+      const matchOption = trimLine.match(optionRegex);
+
+      if (matchOption) {
         if (currentOption) options.push(currentOption);
 
         foundOption = true;
-        const isCorrect = /^\*/.test(line.trim());
-        const optionText = line.trim().replace(/^[\*•]\s*/, "");
 
-        // Tự động gán nhãn A, B, C, D,...
-        const label = String.fromCharCode(65 + optionCount);
-        optionCount++;
+        const isCorrect = matchOption[1] === "*"; // chỉ * là đáp án đúng
+        const label = matchOption[2].toUpperCase();
+        const text = matchOption[3];
 
-        currentOption = { label, text: optionText, isCorrect };
+        currentOption = { label, text, isCorrect };
       } else if (foundOption && currentOption) {
-        // nối thêm nếu dòng tiếp theo cùng option dài
-        currentOption.text += " " + line.trim();
+        // nối tiếp dòng dài câu trả lời
+        currentOption.text += " " + trimLine;
       } else if (!foundOption) {
         questionLines.push(line);
       }
@@ -71,17 +76,14 @@ function showQuestion(index) {
 
   container.innerHTML = "";
 
-  // Tiêu đề câu hỏi
   const titleDiv = document.createElement("div");
   titleDiv.className = "question-title";
   titleDiv.innerHTML = `Câu ${index + 1}:<br>${q.question.replace(/\n/g, "<br>")}`;
   container.appendChild(titleDiv);
 
-  // Các đáp án
   q.options.forEach((opt, i) => {
     const optDiv = document.createElement("div");
     optDiv.className = "option";
-
     if (q.answered) {
       if (i === q.userAnswerIndex) {
         optDiv.classList.add(opt.isCorrect ? "correct" : "incorrect");
@@ -90,13 +92,11 @@ function showQuestion(index) {
       }
       optDiv.classList.add("disabled");
     }
-
     optDiv.textContent = `${opt.label}. ${opt.text}`;
     optDiv.addEventListener("click", () => selectAnswer(i));
     container.appendChild(optDiv);
   });
 
-  // Kết quả đúng/sai
   const resultDiv = document.createElement("div");
   resultDiv.className = "result";
   if (q.answered) {
