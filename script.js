@@ -2,127 +2,158 @@ let questions = [];
 let currentIndex = 0;
 
 function generateQuiz() {
-  const rawInput = document.getElementById('inputArea').value.trim();
-  const blocks = rawInput.split(/(?=^Câu\s*\d+:?|^\d+\/)/gm).filter(Boolean);
+  const rawInput = document.getElementById("inputArea").value.trim();
+  if (!rawInput) {
+    alert("Vui lòng nhập dữ liệu câu hỏi.");
+    return;
+  }
+  const blocks = rawInput.split(/(?=^Câu\s*\d+:?)/gm).filter(Boolean);
 
-  questions = blocks.map(block => {
-    const lines = block.split('\n');
+  questions = blocks.map((block, idx) => {
+    const lines = block.split("\n");
     let questionLines = [];
     let options = [];
     let foundOption = false;
     let currentOption = null;
-    let autoLabel = 'A';
+    let optionCount = 0;
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-
-      if (/^[\*•]\s*[A-Da-d]?[\.\s]/.test(line)) {
+    for (let line of lines) {
+      if (/^[\*•]\s*/.test(line.trim())) {
         if (currentOption) options.push(currentOption);
 
         foundOption = true;
-        const isCorrect = /^\*/.test(line);
-        const cleanLine = line.replace(/^[\*•]\s*/, '');
-        const labelMatch = cleanLine.match(/^([A-Da-d])?[\.\s]/);
-        const label = labelMatch && labelMatch[1] ? labelMatch[1].toUpperCase() : autoLabel;
-        const text = cleanLine.replace(/^([A-Da-d])?[\.\s]*/, '');
+        const isCorrect = /^\*/.test(line.trim());
+        const optionText = line.trim().replace(/^[\*•]\s*/, "");
 
-        currentOption = { label, text, isCorrect };
-        autoLabel = String.fromCharCode(autoLabel.charCodeAt(0) + 1);
+        // Tự động gán nhãn A, B, C, D,...
+        const label = String.fromCharCode(65 + optionCount);
+        optionCount++;
+
+        currentOption = { label, text: optionText, isCorrect };
       } else if (foundOption && currentOption) {
-        currentOption.text += ' ' + line;
+        // nối thêm nếu dòng tiếp theo cùng option dài
+        currentOption.text += " " + line.trim();
       } else if (!foundOption) {
         questionLines.push(line);
       }
     }
     if (currentOption) options.push(currentOption);
 
-    const questionText = questionLines.join(' ').replace(/^Câu\s*\d+:?/i, '').trim();
+    const questionText = questionLines
+      .join("\n")
+      .replace(/^Câu\s*\d+:?/i, "")
+      .trim();
 
     return {
+      id: "q" + idx,
       question: questionText,
       originalOptions: [...options],
       options: [...options],
       answered: false,
-      userAnswerIndex: null
+      userAnswerIndex: null,
     };
   });
 
   if (questions.length > 0) {
     currentIndex = 0;
-    document.getElementById('mainQuizArea').style.display = 'flex';
+    document.getElementById("mainQuizArea").style.display = "flex";
     renderQuestionList();
     showQuestion(currentIndex);
   } else {
-    alert('Không tìm thấy câu hỏi hợp lệ.');
+    alert("Không tìm thấy câu hỏi hợp lệ.");
   }
 }
 
 function showQuestion(index) {
+  currentIndex = index;
   const q = questions[index];
-  const container = document.getElementById('questionContainer');
+  const container = document.getElementById("questionContainer");
 
-  container.innerHTML = `
-    <div class="question-title">Câu ${index + 1}:<br>${q.question.replace(/\n/g, '<br>')}</div>
-    ${q.options.map((opt, i) => `
-      <div class="option ${q.answered ? (i === q.userAnswerIndex ? (opt.isCorrect ? 'correct' : 'incorrect') : '') : ''} ${q.answered ? 'disabled' : ''}"
-           onclick="selectAnswer(${i})">
-        ${opt.label}. ${opt.text}
-      </div>
-    `).join('')}
-    <div class="result" id="result">${q.answered ? (q.options[q.userAnswerIndex].isCorrect ? '✅ Chính xác!' : '❌ Sai rồi!') : ''}</div>
-  `;
+  container.innerHTML = "";
 
+  // Tiêu đề câu hỏi
+  const titleDiv = document.createElement("div");
+  titleDiv.className = "question-title";
+  titleDiv.innerHTML = `Câu ${index + 1}:<br>${q.question.replace(/\n/g, "<br>")}`;
+  container.appendChild(titleDiv);
+
+  // Các đáp án
+  q.options.forEach((opt, i) => {
+    const optDiv = document.createElement("div");
+    optDiv.className = "option";
+
+    if (q.answered) {
+      if (i === q.userAnswerIndex) {
+        optDiv.classList.add(opt.isCorrect ? "correct" : "incorrect");
+      } else if (opt.isCorrect) {
+        optDiv.classList.add("correct");
+      }
+      optDiv.classList.add("disabled");
+    }
+
+    optDiv.textContent = `${opt.label}. ${opt.text}`;
+    optDiv.addEventListener("click", () => selectAnswer(i));
+    container.appendChild(optDiv);
+  });
+
+  // Kết quả đúng/sai
+  const resultDiv = document.createElement("div");
+  resultDiv.className = "result";
+  if (q.answered) {
+    resultDiv.textContent = q.options[q.userAnswerIndex].isCorrect
+      ? "✅ Chính xác!"
+      : "❌ Sai rồi!";
+  } else {
+    resultDiv.textContent = "";
+  }
+  container.appendChild(resultDiv);
+
+  renderQuestionList();
   highlightQuestionInList();
 }
 
 function selectAnswer(index) {
   const q = questions[currentIndex];
   if (q.answered) return;
-
   q.answered = true;
   q.userAnswerIndex = index;
-
   showQuestion(currentIndex);
-  renderQuestionList();
 }
 
 function nextQuestion() {
   if (currentIndex < questions.length - 1) {
-    currentIndex++;
-    showQuestion(currentIndex);
+    showQuestion(currentIndex + 1);
   }
 }
 
 function prevQuestion() {
   if (currentIndex > 0) {
-    currentIndex--;
-    showQuestion(currentIndex);
+    showQuestion(currentIndex - 1);
   }
 }
 
 function restartQuiz() {
-  questions.forEach(q => {
+  questions.forEach((q) => {
     q.answered = false;
     q.userAnswerIndex = null;
     q.options = [...q.originalOptions];
   });
-  currentIndex = 0;
-  showQuestion(currentIndex);
-  renderQuestionList();
+  showQuestion(0);
 }
 
 function shuffleAnswers() {
-  questions.forEach(q => {
-    const correctLabel = q.options.find(o => o.isCorrect)?.label;
-    const shuffled = shuffleArray(q.options.map(o => ({ ...o })));
-
-    q.options = shuffled;
+  questions.forEach((q) => {
+    q.options = shuffleArray(q.originalOptions.map(opt => ({ ...opt })));
     q.answered = false;
     q.userAnswerIndex = null;
   });
+  showQuestion(0);
+}
+
+function shuffleQuestions() {
+  questions = shuffleArray(questions);
   currentIndex = 0;
   showQuestion(currentIndex);
-  renderQuestionList();
 }
 
 function shuffleArray(array) {
@@ -134,28 +165,34 @@ function shuffleArray(array) {
 }
 
 function renderQuestionList() {
-  const listContainer = document.getElementById('listContainer');
-  listContainer.innerHTML = '';
+  const listContainer = document.getElementById("listContainer");
+  listContainer.innerHTML = "";
   questions.forEach((q, i) => {
-    const btn = document.createElement('div');
-    btn.className = 'list-item';
+    const btn = document.createElement("div");
+    btn.className = "list-item";
+
     if (q.answered) {
-      btn.classList.add(q.options[q.userAnswerIndex].isCorrect ? 'correct' : 'incorrect');
+      btn.classList.add(q.options[q.userAnswerIndex].isCorrect ? "correct" : "incorrect");
     } else {
-      btn.classList.add('unanswered');
+      btn.classList.add("unanswered");
     }
+
     btn.textContent = `Câu ${i + 1}`;
-    btn.onclick = () => {
-      currentIndex = i;
-      showQuestion(currentIndex);
-    };
+    btn.addEventListener("click", () => {
+      showQuestion(i);
+    });
+
     listContainer.appendChild(btn);
   });
 }
 
 function highlightQuestionInList() {
-  const items = document.querySelectorAll('.list-item');
+  const items = document.querySelectorAll(".list-item");
   items.forEach((item, idx) => {
-    item.style.border = idx === currentIndex ? '2px solid #000' : 'none';
+    if (idx === currentIndex) {
+      item.classList.add("highlighted");
+    } else {
+      item.classList.remove("highlighted");
+    }
   });
 }
