@@ -1,13 +1,23 @@
 let questions = [];
 let currentIndex = 0;
 
+window.addEventListener("keydown", function (e) {
+  if (e.key === "ArrowRight" || e.key === "Enter" || e.key === " ") nextQuestion();
+  if (e.key === "ArrowLeft") prevQuestion();
+  if (["1", "2", "3", "4"].includes(e.key)) selectAnswer(parseInt(e.key) - 1);
+});
+
 function generateQuiz() {
   const rawInput = document.getElementById("inputArea").value.trim();
-  if (!rawInput) {
-    alert("Vui lòng nhập dữ liệu câu hỏi.");
-    return;
-  }
-  const blocks = rawInput.split(/(?=^Câu\s*\d+:?)/gm).filter(Boolean);
+
+  const cleaned = rawInput
+    .replace(/Câu\s*\d+\s*:\s*\(.*?\)/gi, "") // Xóa (Một đáp án) nếu có
+    .trim();
+
+  // Tách câu hỏi bằng: Câu xx hoặc 1/
+  const blocks = cleaned
+    .split(/\n(?=(?:Câu\s*\d+|^\d+\/))/gm)
+    .filter(Boolean);
 
   questions = blocks.map((block, idx) => {
     const lines = block.split("\n");
@@ -16,28 +26,23 @@ function generateQuiz() {
     let foundOption = false;
     let currentOption = null;
 
-    // Regex nhận dạng đáp án bắt đầu bằng:
-    // (tùy chọn) dấu * hoặc •, tiếp theo là a-d/A-D rồi dấu chấm
-    const optionRegex = /^([\*\•])?\s*([a-dA-D])\.\s*(.*)$/;
-
     for (let line of lines) {
-      const trimLine = line.trim();
+      line = line.trim();
 
-      const matchOption = trimLine.match(optionRegex);
-
-      if (matchOption) {
+      if (/^[\*•]\s*/.test(line)) {
         if (currentOption) options.push(currentOption);
 
         foundOption = true;
+        const isCorrect = line.startsWith("*");
+        const cleanLine = line.replace(/^[\*•]\s*/, "");
 
-        const isCorrect = matchOption[1] === "*"; // chỉ * là đáp án đúng
-        const label = matchOption[2].toUpperCase();
-        const text = matchOption[3];
+        const labelMatch = cleanLine.match(/^([A-Da-d])\.\s*/);
+        const label = labelMatch ? labelMatch[1].toUpperCase() : "?";
+        const text = labelMatch ? cleanLine.replace(/^([A-Da-d])\.\s*/, "") : cleanLine;
 
         currentOption = { label, text, isCorrect };
       } else if (foundOption && currentOption) {
-        // nối tiếp dòng dài câu trả lời
-        currentOption.text += " " + trimLine;
+        currentOption.text += " " + line;
       } else if (!foundOption) {
         questionLines.push(line);
       }
@@ -45,8 +50,9 @@ function generateQuiz() {
     if (currentOption) options.push(currentOption);
 
     const questionText = questionLines
-      .join("\n")
+      .join(" ")
       .replace(/^Câu\s*\d+:?/i, "")
+      .replace(/^\d+\s*\/\s*/, "")
       .trim();
 
     return {
@@ -73,13 +79,7 @@ function showQuestion(index) {
   currentIndex = index;
   const q = questions[index];
   const container = document.getElementById("questionContainer");
-
-  container.innerHTML = "";
-
-  const titleDiv = document.createElement("div");
-  titleDiv.className = "question-title";
-  titleDiv.innerHTML = `Câu ${index + 1}:<br>${q.question.replace(/\n/g, "<br>")}`;
-  container.appendChild(titleDiv);
+  container.innerHTML = `<div class="question-title">Câu ${index + 1}:<br>${q.question.replace(/\n/g, "<br>")}</div>`;
 
   q.options.forEach((opt, i) => {
     const optDiv = document.createElement("div");
@@ -103,8 +103,6 @@ function showQuestion(index) {
     resultDiv.textContent = q.options[q.userAnswerIndex].isCorrect
       ? "✅ Chính xác!"
       : "❌ Sai rồi!";
-  } else {
-    resultDiv.textContent = "";
   }
   container.appendChild(resultDiv);
 
@@ -114,7 +112,7 @@ function showQuestion(index) {
 
 function selectAnswer(index) {
   const q = questions[currentIndex];
-  if (q.answered) return;
+  if (q.answered || index >= q.options.length) return;
   q.answered = true;
   q.userAnswerIndex = index;
   showQuestion(currentIndex);
@@ -122,13 +120,15 @@ function selectAnswer(index) {
 
 function nextQuestion() {
   if (currentIndex < questions.length - 1) {
-    showQuestion(currentIndex + 1);
+    currentIndex++;
+    showQuestion(currentIndex);
   }
 }
 
 function prevQuestion() {
   if (currentIndex > 0) {
-    showQuestion(currentIndex - 1);
+    currentIndex--;
+    showQuestion(currentIndex);
   }
 }
 
@@ -138,22 +138,27 @@ function restartQuiz() {
     q.userAnswerIndex = null;
     q.options = [...q.originalOptions];
   });
-  showQuestion(0);
+  currentIndex = 0;
+  showQuestion(currentIndex);
+  renderQuestionList();
 }
 
 function shuffleAnswers() {
   questions.forEach((q) => {
-    q.options = shuffleArray(q.originalOptions.map(opt => ({ ...opt })));
+    q.options = shuffleArray(q.originalOptions.map((opt) => ({ ...opt })));
     q.answered = false;
     q.userAnswerIndex = null;
   });
-  showQuestion(0);
+  currentIndex = 0;
+  showQuestion(currentIndex);
+  renderQuestionList();
 }
 
 function shuffleQuestions() {
   questions = shuffleArray(questions);
   currentIndex = 0;
   showQuestion(currentIndex);
+  renderQuestionList();
 }
 
 function shuffleArray(array) {
@@ -170,18 +175,18 @@ function renderQuestionList() {
   questions.forEach((q, i) => {
     const btn = document.createElement("div");
     btn.className = "list-item";
-
+    btn.setAttribute("data-id", q.id);
     if (q.answered) {
       btn.classList.add(q.options[q.userAnswerIndex].isCorrect ? "correct" : "incorrect");
     } else {
       btn.classList.add("unanswered");
     }
-
     btn.textContent = `Câu ${i + 1}`;
-    btn.addEventListener("click", () => {
-      showQuestion(i);
-    });
-
+    btn.onclick = () => {
+      const questionId = btn.getAttribute("data-id");
+      currentIndex = questions.findIndex((q) => q.id === questionId);
+      showQuestion(currentIndex);
+    };
     listContainer.appendChild(btn);
   });
 }
@@ -189,10 +194,6 @@ function renderQuestionList() {
 function highlightQuestionInList() {
   const items = document.querySelectorAll(".list-item");
   items.forEach((item, idx) => {
-    if (idx === currentIndex) {
-      item.classList.add("highlighted");
-    } else {
-      item.classList.remove("highlighted");
-    }
+    item.style.border = idx === currentIndex ? "2px solid #000" : "none";
   });
 }
